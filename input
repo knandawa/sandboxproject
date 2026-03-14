@@ -1,0 +1,173 @@
+clear
+clc
+
+% =============================
+% CREATE MAIN WINDOW
+% =============================
+
+Create figure window
+    Title = "Projectile Physics Simulator"
+    Set size and background color
+
+
+% =============================
+% ANGLE SLIDER
+% =============================
+
+Create text label:
+    "Launch Angle (degrees)"
+
+Create slider:
+    min = 0
+    max = 90
+    default = 45
+
+Create dynamic text display:
+    shows current angle value
+
+When slider moves:
+    update angle display
+
+
+% =============================
+% MASS INPUT
+% =============================
+
+Create text label:
+    "Mass (kg)"
+
+Create edit textbox:
+    default = 1
+
+
+% =============================
+% INITIAL VELOCITY INPUT
+% =============================
+
+Create text label:
+    "Initial Velocity (m/s)"
+
+Create edit textbox:
+    default = 20
+
+
+% =============================
+% AIR RESISTANCE SLIDER
+% =============================
+
+Create text label:
+    "Air Resistance Coefficient"
+
+Create slider:
+    min = 0
+    max = 1
+    default = 0
+
+
+% =============================
+% GRAVITY DROPDOWN
+% =============================
+
+Create dropdown menu:
+    options = Earth, Moon, Mars, Custom
+
+
+% =============================
+% CUSTOM GRAVITY INPUT (HIDDEN)
+% =============================
+
+Create text label:
+    "Custom Gravity (m/s^2)"
+
+Create edit textbox
+
+Set visibility = OFF
+
+When dropdown changes:
+
+    If selection = Custom
+        Show custom gravity textbox
+    Else
+        Hide custom gravity textbox
+
+
+% =============================
+% START SIMULATION BUTTON
+% =============================
+
+Create button:
+    "Start Simulation"
+
+When button clicked:
+
+    Read angle from slider
+
+    Read mass from textbox
+    Convert to number
+
+    Read velocity from textbox
+    Convert to number
+
+    Read air resistance from slider
+
+    Read gravity dropdown selection
+
+    If Earth
+        g = 9.81
+    Else if Moon
+        g = 1.62
+    Else if Mars
+        g = 3.71
+    Else if Custom
+        Read custom gravity value
+
+    Validate inputs:
+
+        If mass <= 0
+            Show error message
+            STOP
+
+        If velocity <= 0
+            Show error message
+            STOP
+
+    Create struct:
+
+        inputs.angle = angle
+        inputs.mass = mass
+        inputs.velocity = velocity
+        inputs.drag = airResistance
+        inputs.gravity = g
+
+    Send inputs to calculation module:
+
+        results = calculateProjectile(inputs)
+
+    Send trajectory to animation module:
+
+        animateProjectile(results)
+
+    Plot trajectory:
+
+        plot(results.xTrajectory , results.yTrajectory)
+        xlabel("Distance")
+        ylabel("Height")
+        title("Projectile Motion")
+
+
+% =============================
+% RESET BUTTON
+% =============================
+
+Create button:
+    "Reset"
+
+When clicked:
+
+    Set angle slider = 45
+    Set mass textbox = 1
+    Set velocity textbox = 20
+    Set air resistance slider = 0
+    Set gravity dropdown = Earth
+    Hide custom gravity textbox
+    Clear plot area
