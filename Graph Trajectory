@@ -1,0 +1,56 @@
+function [x,y] = GraphTrajectory(xMax, yMax, v_o, g, theta, windSpeed, dragCoeff)
+
+
+dt = 0.05;
+
+x = [];
+y = [];
+
+x(1) = 0;
+y(1) = 0;
+
+vX = v_o * cos(theta);
+vY = v_o * sin(theta);
+
+i = 1;
+
+while y(i) >= 0 & x(i) <= xMax
+    
+    i = i + 1;
+
+    v_rel_X = vX - windSpeed;
+    v_rel_Y = vY;
+
+    V = sqrt((v_rel_X)^2 + (v_rel_Y)^2);
+
+    aX = V * v_rel_X * (-dragCoeff);
+    aY = -g - dragCoeff * V * v_rel_Y;
+
+    vX = vX + aX*dt;
+    vY = vY + aY*dt;
+
+    x(i) = x(i - 1) + vX*dt;
+    y(i) = y(i-1) + vY*dt;
+
+end
+
+    for i = 1:length(x)
+        plot(x(1:i), y(1:i), 'b-', "LineWidth", 4);
+
+    
+   
+        plot(x(i),y(i), 'bo', "LineWidth", 4);
+        
+        set(gca, "Linewidth", 1, "fontsize", 12)
+        axis([0 xMax 0 yMax]);
+        grid on;
+        
+        pause(0.01);
+        refresh()
+        
+      
+    end
+
+
+    
+end
