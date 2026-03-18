@@ -1,163 +1,113 @@
 clear; clc; close all;
 
-
 % create figure window
-fig = figure('Name', 'Projectile Physics Simulator', 'Position', [300 150 700 500]); % [x-pos. y-pos. width height]
+fig = figure('Name', 'Projectile Trajectory', 'Position', [300 150 700 500]); % [x-pos. y-pos. width height]
 
 % setting up ui control
 uicontrol(fig, 'Style', 'text', 'Position', [50 420 150 20], 'String', 'Launch Angle (Deg)'); % angle label
-angleSlider=uicontrol(fig, 'Style', 'slider', 'Min',0,'Max',90,'Value',45,'Position',[50 390 150 20]); % angle slider
+angleSlider = uicontrol(fig, 'Style', 'slider', 'Min',0,'Max',90,'Value',45,'Position',[50 390 150 20]); % angle slider
 uicontrol(fig,'Style','text','Position',[50 350 150 20],'String','Mass(kg)'); % mass label
-massTextbox=uicontrol(fig,'Style','edit','Position',[50 330 150 25],'String', '1'); % mass textbox
+massTextbox = uicontrol(fig,'Style','edit','Position',[50 330 150 25],'String', '1'); % mass textbox
 uicontrol(fig,'Style','text','Position',[50 290 150 20],'String','Initial Velocity(m/s)'); % velocity label
-velocityTextbox=uicontrol(fig,'Style','edit','Position',[50 270 150 25],'String', '20'); % velocity textbox
-airResSlider=uicontrol(fig,'Style','slider','Min',0,'Max',1,'Value',0,'Position',[50 210 150 20]); % air resistance slider
-gravityOpt=uicontrol(fig,'style','popupmenu','Position',[50 150 150 25],'String',{'Earth', 'Moon','Mars','Custom'}); % gravity value options using dropdown menu
-uicontrol(fig,'Style','pushbutton','Position',[50 80 150 40],'String','Start Simulation','Callback',@startSim); % adding start button
+velocityTextbox = uicontrol(fig,'Style','edit','Position',[50 270 150 25],'String', '20'); % velocity textbox
+uicontrol(fig,'Style','text','Position',[50 230 150 20],'String','Air Resistance (0-1)'); % air resistance label
+airResSlider = uicontrol(fig,'Style','slider','Min',0,'Max',1,'Value',0,'Position',[50 210 150 20]); % air resistance slider
+uicontrol(fig,'Style','text','Position',[50 170 150 20],'String','Gravity'); % gravity label
+gravityOpt = uicontrol(fig,'style','popupmenu','Position',[50 150 150 25],'String',{'Earth', 'Moon','Mars','Custom'}); % gravity dropdown
+
+% Displaying Result (UI)
+uicontrol(fig, 'Style', 'text', 'Position', [50 70 150 20], 'String', 'Results'); % title label
+time_display = uicontrol(fig, 'Style', 'text', 'Position', [50 50 150 20], 'String', 'Time: ');      % display time of flight
+range_display = uicontrol(fig, 'Style', 'text', 'Position', [50 30 150 20], 'String', 'Range: ');    % display horizontal distance
+height_display = uicontrol(fig, 'Style', 'text', 'Position', [50 10 150 20], 'String', 'Max Height: '); % display highest point
 
 % plotting area
 plotAxes = axes(fig,'Position',[0.4 0.2 0.55 0.7]);
+xlabel(plotAxes, 'Horizontal Distance (m)');
+ylabel(plotAxes, 'Vertical Height (m)');
+grid(plotAxes,'on');
 
-
-
-%% Displaying Result (UI)
-% Those UI elements show the final calculated results to user
-uicontrol(fig, 'Style', 'text', ...
-    'Position', [250 160 200 25], ...
-    'String', 'Results');      % title label
-
-time_display = uicontrol(fig, 'Style', 'text', ...
-    'Position', [250 130 250 20], ...
-    'String', 'Time: ');      % display time of flight
-
-range_display = uicontrol(fig, 'Style', 'text', ...
-    'Position', [250 100 250 20], ...
-    'String', 'Range: ');      % display horizontal distance
-
-height_display = uicontrol(fig, 'Style', 'text', ...
-    'Position', [250 70 250 20], ...
-    'String', 'Max Height: ');      % display highest point
+% Start button with anonymous function passing handles explicitly
+startBtn = uicontrol(fig,'Style','pushbutton','Position',[50 110 150 40],'String','Start Simulation', ...
+    'Callback', @(~,~) startSim(angleSlider, massTextbox, velocityTextbox, gravityOpt, airResSlider, time_display, range_display, height_display, plotAxes));
 
 %% Main Simulation
-
-function startSim(~,~) % function for starting the simulation
-% get textbox values
+function startSim(angleSlider, massTextbox, velocityTextbox, gravityOpt, airResSlider, time_display, range_display, height_display, plotAxes)
     angle = get(angleSlider, 'Value'); % gets the current slider angle
-    mass=str2double(get(massTextbox,'String')); % read mass textbox value
-    velocity=str2double(get(velocityTextbox,'String')); % read velocity textbox value
-    gravityChoice=get(gravityOpt,'Value'); % reading gravity selection from drop down menu
-    drag=get(airResSlider,'Value'); % get air resistance value
+    mass = str2double(get(massTextbox,'String')); % read mass textbox value
+    velocity = str2double(get(velocityTextbox,'String')); % read velocity textbox value
+    gravityChoice = get(gravityOpt,'Value'); % reading gravity selection from drop down menu
+    drag = get(airResSlider,'Value'); % get air resistance value
 
-   % assigning gravity
-    if gravityChoice==1
-        g=9.81;
-    elseif gravityChoice==2
-        g=1.62;
-    elseif gravityChoice==3
-        g=3.71;
+    % assigning gravity
+    if gravityChoice == 1
+        g = 9.81;
+    elseif gravityChoice == 2
+        g = 1.62;
+    elseif gravityChoice == 3
+        g = 3.71;
+    else
+        g = 9.81;
     end
 
+    [t, x, y, results] = projectile_sim(angle, velocity, mass, g, drag);
 
-% setting up inputs structure
-inputs.angle=angle;
-inputs.mass=mass;
-inputs.velocity=velocity;
-inputs.drag=drag;
-inputs.gravity=g;
+    axes(plotAxes);
+    cla
+    plot(x, y, 'b', 'LineWidth', 2); % trajectory all blue
+    xlabel('Horizontal Distance (m)');
+    ylabel('Vertical Height (m)');
+    grid on;
+    title(sprintf('Projectile Trajectory (Angle=%.1f°, Velocity=%.1f m/s)', angle, velocity)); % added title
+    hold on
+    GraphTrajectory(x, y); % animate projectile
+    hold off
 
-[t, x, y, results] = projectile_sim(angle, velocity, mass, g, drag);
-
-axes(plotAxes);
-cla
-plot(x, y, 'b', 'LineWidth', 2);
-grid on % plotting graph
-
-
-GraphTrajectory(x,y);
-%% Displaying result in projectile_sim
-% Convert numerical results into strings and UI text
-
-time_display.String = strcat('Time: ', ...
-    num2str(results.time_of_flight, '%.2f'), ' s');   % showing total time in seconds
-
-range_display.String = strcat('Range: ', ...
-    num2str(results.range, '%.2f'), ' m');   % showing total horizontal distance
-
-height_display.String = strcat('Max Height: ', ...
-    num2str(results.max_height, '%.2f'), ' m');   % maximum vertical height
+    % Displaying result in UI
+    time_display.String = strcat('Time: ', num2str(results.time_of_flight,'%.2f'), ' s');
+    range_display.String = strcat('Range: ', num2str(results.range,'%.2f'), ' m');
+    height_display.String = strcat('Max Height: ', num2str(results.max_height,'%.2f'), ' m');
 end
 
 %% Calculation
 function [t, x, y, results] = projectile_sim(angle, v0, mass, g, drag)
+    theta = deg2rad(angle);
+    vx = v0 * cos(theta);
+    vy = v0 * sin(theta);
+    dt = 0.01;
+    x = 0; y = 0; t = 0;
+    vx_curr = vx; vy_curr = vy;
+    i = 1;
 
-% Convert angle to radians
-theta = deg2rad(angle);
+    while y(i) >= 0
+        Fx = -drag * vx_curr;
+        Fy = -mass * g - drag * vy_curr;
+        ax = Fx / mass;
+        ay = Fy / mass;
+        vx_curr = vx_curr + ax * dt;
+        vy_curr = vy_curr + ay * dt;
+        x(i+1) = x(i) + vx_curr * dt;
+        y(i+1) = y(i) + vy_curr * dt;
+        t(i+1) = t(i) + dt;
+        i = i + 1;
+    end
 
-% Initial velocity components
-vx = v0 * cos(theta);
-vy = v0 * sin(theta);
-
-% Time step
-dt = 0.01;
-
-% Initialize arrays
-x = 0;
-y = 0;
-t = 0;
-
-% Current velocities
-vx_curr = vx;
-vy_curr = vy;
-
-i = 1;
-
-% Run simulation until projectile hits ground
-while y(i) >= 0
-    
-    % Linear drag forces
-    Fx = -drag * vx_curr;
-    Fy = -mass * g - drag * vy_curr;
-    
-    % Acceleration
-    ax = Fx / mass;
-    ay = Fy / mass;
-    
-    % Update velocity
-    vx_curr = vx_curr + ax * dt;
-    vy_curr = vy_curr + ay * dt;
-    
-    % Update position
-    x(i+1) = x(i) + vx_curr * dt;
-    y(i+1) = y(i) + vy_curr * dt;
-    
-    % Update time
-    t(i+1) = t(i) + dt;
-    
-    i = i + 1;
-end
-
-% Store results
-results.time_of_flight = t(end);
-results.range = x(end);
-results.max_height = max(y);
-
+    results.time_of_flight = t(end);
+    results.range = x(end);
+    results.max_height = max(y);
 end
 
 %% Graph Trajectory
-function GraphTrajectory(x,y)
+function GraphTrajectory(x, y)
     for i = 1:length(x)
-        cla
-        
-        plot(x(1:i), y(1:i));
+        plot(x(1:i), y(1:i), 'b', 'LineWidth', 2);
         hold on
-        
-        plot(x(i),y(i), 'bo', "LineWidth", 4);
+        plot(x(i), y(i), 'bo', "LineWidth", 2);
         hold off
-        
-        set(gca, "Linewidth", 1, "fontsize", 12)
-        axis([0 max(x) 0 max(y)])
+        xlabel('Horizontal Distance (m)');
+        ylabel('Vertical Height (m)');
+        axis([0 max(x) 0 max(y)*1.1])
         grid on;
-        
         pause(0.01);
     end
 end
