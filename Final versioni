@@ -42,11 +42,11 @@ height_display = uicontrol(fig, 'Style', 'text', ...
 
 function startSim(~,~) % function for starting the simulation
 % get textbox values
-angle = get(angleSlider, 'Value'); % gets the current slider angle
-mass=str2double(get(massTextbox,'String')); % read mass textbox value
-velocity=str2double(get(velocityTextbox,'String')); % read velocity textbox value
-gravityChoice=get(gravityOpt,'Value'); % reading gravity selection from drop down menu
-drag=get(airResSlider,'Value'); % get air resistance value
+    angle = get(angleSlider, 'Value'); % gets the current slider angle
+    mass=str2double(get(massTextbox,'String')); % read mass textbox value
+    velocity=str2double(get(velocityTextbox,'String')); % read velocity textbox value
+    gravityChoice=get(gravityOpt,'Value'); % reading gravity selection from drop down menu
+    drag=get(airResSlider,'Value'); % get air resistance value
 
    % assigning gravity
     if gravityChoice==1
