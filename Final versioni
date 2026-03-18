@@ -1,38 +1,45 @@
-clear; clc; close all;
+clear; clc; close all; 
 
 % create figure window
 fig = figure('Name', 'Projectile Trajectory', 'Position', [300 150 700 500]); % [x-pos. y-pos. width height]
 
 % setting up ui control
-uicontrol(fig, 'Style', 'text', 'Position', [50 420 150 20], 'String', 'Launch Angle (Deg)'); % angle label
-angleSlider = uicontrol(fig, 'Style', 'slider', 'Min',0,'Max',90,'Value',45,'Position',[50 390 150 20]); % angle slider
-uicontrol(fig,'Style','text','Position',[50 350 150 20],'String','Mass(kg)'); % mass label
-massTextbox = uicontrol(fig,'Style','edit','Position',[50 330 150 25],'String', '1'); % mass textbox
-uicontrol(fig,'Style','text','Position',[50 290 150 20],'String','Initial Velocity(m/s)'); % velocity label
-velocityTextbox = uicontrol(fig,'Style','edit','Position',[50 270 150 25],'String', '20'); % velocity textbox
-uicontrol(fig,'Style','text','Position',[50 230 150 20],'String','Air Resistance (0-1)'); % air resistance label
-airResSlider = uicontrol(fig,'Style','slider','Min',0,'Max',1,'Value',0,'Position',[50 210 150 20]); % air resistance slider
-uicontrol(fig,'Style','text','Position',[50 170 150 20],'String','Gravity'); % gravity label
-gravityOpt = uicontrol(fig,'style','popupmenu','Position',[50 150 150 25],'String',{'Earth', 'Moon','Mars','Custom'}); % gravity dropdown
+uicontrol(fig, 'Style', 'text', 'Position', [50 460 150 20], 'String', 'Launch Angle (Deg)'); % angle label
+angleSlider = uicontrol(fig, 'Style', 'slider', 'Min',0,'Max',90,'Value',45,'Position',[50 430 150 20]); % angle slider
+uicontrol(fig,'Style','text','Position',[50 390 150 20],'String','Mass(kg)'); % mass label
+massTextbox = uicontrol(fig,'Style','edit','Position',[50 370 150 25],'String', '1'); % mass textbox
+uicontrol(fig,'Style','text','Position',[50 330 150 20],'String','Initial Velocity(m/s)'); % velocity label
+velocityTextbox = uicontrol(fig,'Style','edit','Position',[50 310 150 25],'String', '20'); % velocity textbox
+uicontrol(fig,'Style','text','Position',[50 270 150 20],'String','Air Resistance (0-1)'); % air resistance label
+airResSlider = uicontrol(fig,'Style','slider','Min',0,'Max',1,'Value',0,'Position',[50 250 150 20]); % air resistance slider
+uicontrol(fig,'Style','text','Position',[50 210 150 20],'String','Gravity'); % gravity label
+gravityOpt = uicontrol(fig,'style','popupmenu','Position',[50 190 150 25],'String',{'Earth', 'Moon','Mars','Custom'}); % gravity dropdown
 
-% Displaying Result (UI)
-uicontrol(fig, 'Style', 'text', 'Position', [50 70 150 20], 'String', 'Results'); % title label
-time_display = uicontrol(fig, 'Style', 'text', 'Position', [50 50 150 20], 'String', 'Time: ');      % display time of flight
-range_display = uicontrol(fig, 'Style', 'text', 'Position', [50 30 150 20], 'String', 'Range: ');    % display horizontal distance
-height_display = uicontrol(fig, 'Style', 'text', 'Position', [50 10 150 20], 'String', 'Max Height: '); % display highest point
+% custom gravity UI 
+customGravityLabel = uicontrol(fig,'Style','text','Position',[50 170 150 20],'String','Custom Gravity (m/s^2)','Visible','off'); % custom gravity label
+customGravityTextbox = uicontrol(fig,'Style','edit','Position',[50 150 150 25],'String','9.81','Visible','off'); % custom gravity textbox
+
+% displaying result (UI)
+uicontrol(fig, 'Style', 'text', 'Position', [50 110 150 20], 'String', 'Results'); % title label
+time_display = uicontrol(fig, 'Style', 'text', 'Position', [50 90 150 20], 'String', 'Time: ');      % display time of flight
+range_display = uicontrol(fig, 'Style', 'text', 'Position', [50 70 150 20], 'String', 'Range: ');    % display horizontal distance
+height_display = uicontrol(fig, 'Style', 'text', 'Position', [50 50 150 20], 'String', 'Max Height: '); % display highest point
 
 % plotting area
-plotAxes = axes(fig,'Position',[0.4 0.2 0.55 0.7]);
-xlabel(plotAxes, 'Horizontal Distance (m)');
-ylabel(plotAxes, 'Vertical Height (m)');
-grid(plotAxes,'on');
+plotAxes = axes(fig,'Position',[0.4 0.3 0.55 0.6]); % plotting axes
+xlabel(plotAxes, 'Horizontal Distance (m)'); % x-axis label
+ylabel(plotAxes, 'Vertical Height (m)'); % y-axis label
+grid(plotAxes,'on'); % turn on grid
 
-% Start button with anonymous function passing handles explicitly
-startBtn = uicontrol(fig,'Style','pushbutton','Position',[50 110 150 40],'String','Start Simulation', ...
-    'Callback', @(~,~) startSim(angleSlider, massTextbox, velocityTextbox, gravityOpt, airResSlider, time_display, range_display, height_display, plotAxes));
+% start button underneath the graph
+startBtn = uicontrol(fig,'Style','pushbutton','Position',[350 50 200 40],'String','Start Simulation', ... 
+    'Callback', @(~,~) startSim(angleSlider, massTextbox, velocityTextbox, gravityOpt, airResSlider, customGravityTextbox, time_display, range_display, height_display, plotAxes)); % button callback
 
-%% Main Simulation
-function startSim(angleSlider, massTextbox, velocityTextbox, gravityOpt, airResSlider, time_display, range_display, height_display, plotAxes)
+% dropdown callback to dynamically show/hide the custom gravity textbox
+gravityOpt.Callback = @(src,~) toggleCustomGravity(src, customGravityLabel, customGravityTextbox); % update visibility
+
+% main simulation
+function startSim(angleSlider, massTextbox, velocityTextbox, gravityOpt, airResSlider, customGravityTextbox, time_display, range_display, height_display, plotAxes)
     angle = get(angleSlider, 'Value'); % gets the current slider angle
     mass = str2double(get(massTextbox,'String')); % read mass textbox value
     velocity = str2double(get(velocityTextbox,'String')); % read velocity textbox value
@@ -41,73 +48,87 @@ function startSim(angleSlider, massTextbox, velocityTextbox, gravityOpt, airResS
 
     % assigning gravity
     if gravityChoice == 1
-        g = 9.81;
+        g = 9.81; % Earth
     elseif gravityChoice == 2
-        g = 1.62;
+        g = 1.62; % Moon
     elseif gravityChoice == 3
-        g = 3.71;
+        g = 3.71; % Mars
     else
-        g = 9.81;
+        g = str2double(get(customGravityTextbox,'String')); % Custom gravity
+        if isnan(g)
+            g = 9.81; % fallback
+        end
     end
 
-    [t, x, y, results] = projectile_sim(angle, velocity, mass, g, drag);
+    [t, x, y, results] = projectile_sim(angle, velocity, mass, g, drag); % run simulation
 
-    axes(plotAxes);
-    cla
-    plot(x, y, 'b', 'LineWidth', 2); % trajectory all blue
-    xlabel('Horizontal Distance (m)');
-    ylabel('Vertical Height (m)');
+    axes(plotAxes); 
+    cla % clear previous plot
+    plot(x, y, 'b', 'LineWidth', 2); % trajectory
+    xlabel('Horizontal Distance (m)'); 
+    ylabel('Vertical Height (m)'); 
     grid on;
-    title(sprintf('Projectile Trajectory (Angle=%.1f°, Velocity=%.1f m/s)', angle, velocity)); % added title
+    title(sprintf('Projectile Trajectory (Angle=%.1f°, Velocity=%.1f m/s)', angle, velocity)); % title
     hold on
     GraphTrajectory(x, y); % animate projectile
     hold off
 
     % Displaying result in UI
-    time_display.String = strcat('Time: ', num2str(results.time_of_flight,'%.2f'), ' s');
-    range_display.String = strcat('Range: ', num2str(results.range,'%.2f'), ' m');
-    height_display.String = strcat('Max Height: ', num2str(results.max_height,'%.2f'), ' m');
+    time_display.String = strcat('Time: ', num2str(results.time_of_flight,'%.2f'), ' s'); % time of flight
+    range_display.String = strcat('Range: ', num2str(results.range,'%.2f'), ' m'); % range
+    height_display.String = strcat('Max Height: ', num2str(results.max_height,'%.2f'), ' m'); % max height
 end
 
-%% Calculation
+% calculations
 function [t, x, y, results] = projectile_sim(angle, v0, mass, g, drag)
-    theta = deg2rad(angle);
-    vx = v0 * cos(theta);
-    vy = v0 * sin(theta);
-    dt = 0.01;
-    x = 0; y = 0; t = 0;
-    vx_curr = vx; vy_curr = vy;
-    i = 1;
+    theta = deg2rad(angle); % convert to radians
+    vx = v0 * cos(theta); % initial x-velocity
+    vy = v0 * sin(theta); % initial y-velocity
+    dt = 0.01; % time step
+    x = 0; y = 0; t = 0; % initialize
+    vx_curr = vx; vy_curr = vy; % current velocities
+    i = 1; % index
 
     while y(i) >= 0
-        Fx = -drag * vx_curr;
-        Fy = -mass * g - drag * vy_curr;
-        ax = Fx / mass;
-        ay = Fy / mass;
-        vx_curr = vx_curr + ax * dt;
-        vy_curr = vy_curr + ay * dt;
-        x(i+1) = x(i) + vx_curr * dt;
-        y(i+1) = y(i) + vy_curr * dt;
-        t(i+1) = t(i) + dt;
-        i = i + 1;
+        Fx = -drag * vx_curr; % drag force x
+        Fy = -mass * g - drag * vy_curr; % drag + gravity y
+        ax = Fx / mass; % acceleration x
+        ay = Fy / mass; % acceleration y
+        vx_curr = vx_curr + ax * dt; % update velocity x
+        vy_curr = vy_curr + ay * dt; % update velocity y
+        x(i+1) = x(i) + vx_curr * dt; % update position x
+        y(i+1) = y(i) + vy_curr * dt; % update position y
+        t(i+1) = t(i) + dt; % update time
+        i = i + 1; % increment index
     end
 
-    results.time_of_flight = t(end);
-    results.range = x(end);
-    results.max_height = max(y);
+    results.time_of_flight = t(end); % total flight time
+    results.range = x(end); % horizontal distance
+    results.max_height = max(y); % maximum height
 end
 
-%% Graph Trajectory
+% graph trajectory
 function GraphTrajectory(x, y)
     for i = 1:length(x)
-        plot(x(1:i), y(1:i), 'b', 'LineWidth', 2);
+        plot(x(1:i), y(1:i), 'b', 'LineWidth', 2); % trajectory so far
         hold on
-        plot(x(i), y(i), 'bo', "LineWidth", 2);
+        plot(x(i), y(i), 'bo', "LineWidth", 2); % current point
         hold off
         xlabel('Horizontal Distance (m)');
         ylabel('Vertical Height (m)');
-        axis([0 max(x) 0 max(y)*1.1])
+        axis([0 max(x) 0 max(y)*1.1]); % adjust axis
         grid on;
-        pause(0.01);
+        pause(0.01); % animation speed
+    end
+end
+
+% toggle custom gravity vaisibility
+function toggleCustomGravity(src, labelHandle, textboxHandle)
+    if src.Value == 4 % Custom selected
+        labelHandle.Visible = 'on'; % show label
+        textboxHandle.Visible = 'on'; % show textbox
+    else
+        labelHandle.Visible = 'off'; % hide label
+        textboxHandle.Visible = 'off'; % hide textbox
     end
 end
